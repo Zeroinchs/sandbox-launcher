@@ -1,0 +1,39 @@
+name: Build and Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  build-appimage:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y python3-tk firejail fuse libfuse2
+          pip install pyinstaller tkinterdnd2
+      - name: Build AppImage
+        run: |
+          wget -c https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-x86_64.AppImage
+          chmod +x appimagetool-x86_64.AppImage
+          pyinstaller --noconfirm --onedir --windowed --collect-all tkinterdnd2 --name "SandboxLauncher" launcher.py
+          mkdir -p AppDir/usr/bin
+          cp -r dist/SandboxLauncher/* AppDir/usr/bin/
+          cat << 'DESK' > AppDir/AppRun
+          #!/bin/bash
+          HERE="$(dirname "$(readlink -f "${0}")")"
+          exec "${HERE}/usr/bin/SandboxLauncher" "$@"
+          DESK
+          chmod +x AppDir/AppRun
+          ./appimagetool-x86_64.AppImage AppDir SandboxLauncher-x86_64.AppImage
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: SandboxLauncher-x86_64.AppImage
+          generate_release_notes: true
