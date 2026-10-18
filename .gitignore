@@ -1,0 +1,15 @@
+# Ignore PyInstaller build directories
+build/
+dist/
+AppDir/
+__pycache__/
+
+# Ignore the appimage tools
+*.AppImage
+appimagetool-*
+
+# Ignore generated spec files
+*.spec
+
+# Ignore virtual environment
+venv/
